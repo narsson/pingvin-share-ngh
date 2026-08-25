@@ -2,15 +2,14 @@ name: Sync Upstream (smp46/pingvin-share-x)
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 3 * * *"  # 03:00 UTC = 04:00 Lomé
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
-  sync:
+  detect:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
@@ -18,12 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup git identity
-        run: |
-          git config user.email "narsson@nghcorp.info"
-          git config user.name "NGH Corp Bot"
-
-      - name: Fetch upstream tags & main
+      - name: Fetch upstream tags
         run: |
           git remote add upstream https://github.com/smp46/pingvin-share-x.git
           git fetch upstream --tags --prune
@@ -31,98 +25,54 @@ jobs:
       - name: Detect new upstream version
         id: detect
         run: |
-          UPSTREAM_TAG=$(git tag --list --sort=-v:refname 'v*' | grep -v "ngh" | grep -v "beta\|alpha\|rc" | head -1)
-          echo "upstream_tag=$UPSTREAM_TAG" >> $GITHUB_OUTPUT
-
+          # Latest stable upstream tag (skip beta/alpha/rc)
+          UPSTREAM_TAG=$(git tag --list --sort=-v:refname 'v*' | grep -v -E "ngh|beta|alpha|rc" | head -1)
           OUR_TAG=$(git tag --list --sort=-v:refname 'v*-ngh*' | head -1)
-          echo "our_tag=$OUR_TAG" >> $GITHUB_OUTPUT
-
           OUR_BASE=$(echo "$OUR_TAG" | sed 's/-ngh[0-9]*$//')
+
+          echo "upstream_tag=$UPSTREAM_TAG" >> $GITHUB_OUTPUT
+          echo "our_tag=$OUR_TAG" >> $GITHUB_OUTPUT
           echo "our_base=$OUR_BASE" >> $GITHUB_OUTPUT
 
-          echo "Upstream latest stable: $UPSTREAM_TAG"
-          echo "Our latest tag: $OUR_TAG (base $OUR_BASE)"
+          echo "📊 Upstream: $UPSTREAM_TAG | Our: $OUR_TAG (base $OUR_BASE)"
 
           if [ "$UPSTREAM_TAG" != "$OUR_BASE" ] && [ -n "$UPSTREAM_TAG" ]; then
-            echo "new_version=true" >> $GITHUB_OUTPUT
+            echo "new=true" >> $GITHUB_OUTPUT
+            # Preview conflicts by attempting merge in-memory
+            git config user.email "bot@ngh.network"
+            git config user.name "NGH Bot"
+            git checkout -b preview-merge
+            if git merge --no-commit --no-ff "$UPSTREAM_TAG" >/dev/null 2>&1; then
+              echo "will_conflict=no" >> $GITHUB_OUTPUT
+            else
+              CONFLICTS=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
+              echo "will_conflict=yes" >> $GITHUB_OUTPUT
+              echo "conflicts=$CONFLICTS" >> $GITHUB_OUTPUT
+              git merge --abort
+            fi
           else
-            echo "new_version=false" >> $GITHUB_OUTPUT
+            echo "new=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Merge upstream into branch
-        if: steps.detect.outputs.new_version == 'true'
-        id: merge
-        run: |
-          BRANCH="sync-upstream-${{ steps.detect.outputs.upstream_tag }}"
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-
-          git checkout -B "$BRANCH"
-
-          if git merge --no-edit "${{ steps.detect.outputs.upstream_tag }}"; then
-            echo "status=clean" >> $GITHUB_OUTPUT
-          else
-            CONFLICTS=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
-            echo "status=conflict" >> $GITHUB_OUTPUT
-            echo "conflicts=$CONFLICTS" >> $GITHUB_OUTPUT
-            # Commit conflict state so PR can show diff
-            git add -A
-            git commit -m "MERGE CONFLICT" --allow-empty
-          fi
-
-      - name: Create Pull Request
-        if: steps.detect.outputs.new_version == 'true'
-        id: cpr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: sync-upstream-${{ steps.detect.outputs.upstream_tag }}
-          base: main
-          title: "Sync upstream ${{ steps.detect.outputs.upstream_tag }}"
-          body: |
-            ${{ steps.merge.outputs.status == 'clean' && '✅ Merge propre (0 conflit) sur les 7 fichiers NGH.' || format('⚠️ **CONFLITS**: {0}', steps.merge.outputs.conflicts) }}
-
-            Base: ${{ steps.detect.outputs.our_tag }} → Upstream: ${{ steps.detect.outputs.upstream_tag }}
-
-            **Étapes après merge**:
-            1. Merge cette PR
-            2. `git checkout main && git pull`
-            3. `git tag ${{ steps.detect.outputs.upstream_tag }}-ngh1 && git push origin ${{ steps.detect.outputs.upstream_tag }}-ngh1`
-            4. GHA build automatique → image ghcr.io
-            5. UGREEN cron auto-deploy (dans 15 min)
-          delete-branch: false
-
-      - name: Telegram notification
-        if: steps.detect.outputs.new_version == 'true'
+      - name: Telegram notification (new version detected)
+        if: steps.detect.outputs.new == 'true'
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          UPSTREAM: ${{ steps.detect.outputs.upstream_tag }}
+          OUR: ${{ steps.detect.outputs.our_tag }}
+          CONFLICT: ${{ steps.detect.outputs.will_conflict }}
+          FILES: ${{ steps.detect.outputs.conflicts }}
         run: |
-          STATUS="${{ steps.merge.outputs.status }}"
-          PR_URL="${{ steps.cpr.outputs.pull-request-url }}"
-          UPSTREAM="${{ steps.detect.outputs.upstream_tag }}"
-
-          if [ "$STATUS" = "clean" ]; then
-            MSG="✅ NGH Pingvin Fork — upstream $UPSTREAM détecté
-
-          PR créée (merge propre): $PR_URL
-
-          Merge + tag ${UPSTREAM}-ngh1 pour trigger le build."
+          NL=$'\n'
+          if [ "$CONFLICT" = "yes" ]; then
+            STATUS="⚠️ CONFLIT DE MERGE prévu sur : ${FILES}${NL}Résolution manuelle requise."
           else
-            MSG="⚠️ NGH Pingvin Fork — upstream $UPSTREAM
-
-          PR avec CONFLITS: $PR_URL
-          Fichiers: ${{ steps.merge.outputs.conflicts }}"
+            STATUS="✅ Merge propre prévu (0 conflit sur les 7 fichiers NGH)."
           fi
+
+          MSG="🐧 NGH Pingvin Fork — nouvelle version upstream${NL}${NL}Upstream: ${UPSTREAM}${NL}Notre dernier: ${OUR}${NL}${NL}${STATUS}${NL}${NL}📋 À faire (2 min):${NL}git remote add upstream https://github.com/smp46/pingvin-share-x.git # une fois${NL}git fetch upstream --tags${NL}git merge ${UPSTREAM}${NL}git tag ${UPSTREAM}-ngh1${NL}git push origin main --tags${NL}${NL}Puis GHA build + UGREEN auto-deploy (~25 min)."
 
           curl -sk --data-urlencode "chat_id=$CHAT_ID" \
             --data-urlencode "text=$MSG" \
-            "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" >/dev/null
-
-      - name: Skip notification (up to date)
-        if: steps.detect.outputs.new_version == 'false'
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          echo "No new upstream version — silent OK"
-          # No telegram spam on daily no-op run
+            "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" | head -c 200
