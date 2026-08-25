@@ -13,14 +13,14 @@ export default {
   // END navbar
 
   // /
-  "home.title": "Une plateforme de partage de fichiers <h>autohébergée</h>.",
-  "home.description": "Voulez-vous vraiment remettre vos fichiers personnels dans les mains de tiers comme WeTransfer ?",
-  "home.bullet.a.name": "Auto-hébergé",
-  "home.bullet.a.description": "Hébergez Pingvin Share sur votre propre machine.",
+  "home.title": "Envoyez vos <h>fichiers</h> en toute simplicité.",
+  "home.description": "Alternative professionnelle à WeTransfer, hébergée par NGH Corp à Lomé.",
+  "home.bullet.a.name": "Politique zero-access",
+  "home.bullet.a.description": "Les équipes NGH n\'accèdent jamais aux fichiers clients. Journaux serveur effacés toutes les 24h, piste d\'audit chiffrée.",
   "home.bullet.b.name": "Confidentialité",
-  "home.bullet.b.description": "Vos fichiers sont les vôtres et ne seront jamais consultés par des tiers.",
-  "home.bullet.c.name": "Aucune rébarbative limite de taille",
-  "home.bullet.c.description": "Téléchargez des fichiers aussi volumineux que vous le souhaitez. Votre disque dur est votre limite.",
+  "home.bullet.b.description": "Confidentialité de bout en bout — aucun tiers ne peut lire vos fichiers.",
+  "home.bullet.c.name": "Aucune limite frustrante",
+  "home.bullet.c.description": "Jusqu\'à 2 Go par envoi, jamais de coupure.",
   "home.button.start": "Commencer",
   "home.button.source": "Code source",
   // END /

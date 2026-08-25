@@ -15,18 +15,18 @@ export default {
   // END navbar
 
   // /
-  "home.title": "A <h>self-hosted</h> file sharing platform.",
+  "home.title": "Share files with <h>your clients</h> effortlessly.",
 
   "home.description":
-    "Do you really want to give your personal files in the hand of third parties like WeTransfer?",
-  "home.bullet.a.name": "Self-Hosted",
-  "home.bullet.a.description": "Host Pingvin Share on your own machine.",
+    "Professional file transfer for NGH Corp — a business-grade WeTransfer alternative.",
+  "home.bullet.a.name": "Zero-Access Policy",
+  "home.bullet.a.description": "NGH staff never access customer files. Server logs auto-purged every 24 hours, audit trail encrypted.",
   "home.bullet.b.name": "Privacy",
   "home.bullet.b.description":
-    "Your files are yours and will never be accessed by third parties.",
-  "home.bullet.c.name": "No annoying file size limit",
+    "End-to-end confidentiality — no third-party can read your files, ever.",
+  "home.bullet.c.name": "No annoying limits",
   "home.bullet.c.description":
-    "Upload files as big as you want. Only your hard drive will be your limit.",
+    "Up to 2 GB per upload, no forced downtime.",
 
   "home.button.start": "Get started",
   "home.button.source": "Source code",

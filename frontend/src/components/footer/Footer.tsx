@@ -30,7 +30,7 @@ const Footer = () => {
           Powered by{" "}
           <Anchor
             size="xs"
-            href="https://github.com/smp46/pingvin-share-x"
+            href="https://ngh.network"
             target="_blank"
           >
             Pingvin Share X
@@ -44,7 +44,7 @@ const Footer = () => {
             Powered by{" "}
             <Anchor
               size="xs"
-              href="https://github.com/smp46/pingvin-share-x"
+              href="https://ngh.network"
               target="_blank"
             >
               Pingvin Share X
