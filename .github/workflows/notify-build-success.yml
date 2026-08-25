@@ -1,0 +1,38 @@
+name: Notify Build Success (Telegram)
+
+on:
+  workflow_run:
+    workflows: ["Build and Push NGH Docker Image"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Send Telegram notification
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          RUN_URL="${{ github.event.workflow_run.html_url }}"
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
+          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+          SHORT_SHA="${HEAD_SHA:0:7}"
+          REPO="${{ github.repository }}"
+
+          MSG="🐧 <b>NGH Pingvin Fork — Image Ready</b>
+
+          Build success sur <code>$HEAD_BRANCH</code> (<code>$SHORT_SHA</code>)
+          Image: <code>ghcr.io/$REPO:$HEAD_BRANCH</code>
+
+          Le script cron <code>pingvin-auto-update.sh</code> sur UGREEN va détecter et déployer dans les 15 min.
+
+          Manuel: <a href=\"$RUN_URL\">workflow run</a>"
+
+          curl -sk --data-urlencode "chat_id=$CHAT_ID" \
+            --data-urlencode "text=$MSG" \
+            --data-urlencode "parse_mode=HTML" \
+            "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" | head -c 200

@@ -1,0 +1,180 @@
+name: Sync Upstream (smp46/pingvin-share-x)
+
+on:
+  schedule:
+    # Every day at 03:00 UTC (04:00 Lomé)
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup git identity
+        run: |
+          git config user.email "narsson@nghcorp.info"
+          git config user.name "NGH Corp Bot"
+
+      - name: Fetch upstream tags & main
+        run: |
+          git remote add upstream https://github.com/smp46/pingvin-share-x.git
+          git fetch upstream --tags --prune
+
+      - name: Detect new upstream version
+        id: detect
+        run: |
+          # Find highest upstream tag matching v*
+          UPSTREAM_TAG=$(git tag --list --sort=-v:refname 'v*' | grep -v "ngh" | head -1)
+          echo "upstream_tag=$UPSTREAM_TAG" >> $GITHUB_OUTPUT
+          echo "Latest upstream tag: $UPSTREAM_TAG"
+
+          # Find highest our fork tag matching v*-ngh*
+          OUR_TAG=$(git tag --list --sort=-v:refname 'v*-ngh*' | head -1)
+          echo "our_tag=$OUR_TAG" >> $GITHUB_OUTPUT
+          echo "Our latest tag: $OUR_TAG"
+
+          # Extract the base version from our fork tag (strip -nghN)
+          OUR_BASE=$(echo "$OUR_TAG" | sed 's/-ngh[0-9]*$//')
+          echo "our_base=$OUR_BASE" >> $GITHUB_OUTPUT
+
+          if [ "$UPSTREAM_TAG" != "$OUR_BASE" ] && [ -n "$UPSTREAM_TAG" ]; then
+            echo "new_version=true" >> $GITHUB_OUTPUT
+            echo "🆕 New upstream version detected: $UPSTREAM_TAG (our base: $OUR_BASE)"
+          else
+            echo "new_version=false" >> $GITHUB_OUTPUT
+            echo "✅ Already up to date with upstream $UPSTREAM_TAG"
+          fi
+
+      - name: Check existing PR
+        if: steps.detect.outputs.new_version == 'true'
+        id: check_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="sync-upstream-${{ steps.detect.outputs.upstream_tag }}"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // ""')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already exists for $BRANCH"
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Attempt merge upstream into new branch
+        if: steps.detect.outputs.new_version == 'true' && steps.check_pr.outputs.pr_exists == 'false'
+        id: merge
+        run: |
+          BRANCH="${{ steps.check_pr.outputs.branch }}"
+          UPSTREAM_TAG="${{ steps.detect.outputs.upstream_tag }}"
+
+          git checkout -b "$BRANCH"
+
+          # Attempt merge — capture conflicts if any
+          if git merge --no-edit "$UPSTREAM_TAG"; then
+            echo "merge_status=clean" >> $GITHUB_OUTPUT
+            echo "✅ Merge clean, no conflicts"
+          else
+            echo "merge_status=conflict" >> $GITHUB_OUTPUT
+            # List conflicts
+            CONFLICTS=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
+            echo "conflicts=$CONFLICTS" >> $GITHUB_OUTPUT
+            echo "⚠️ Conflicts on: $CONFLICTS"
+            # Reset for manual resolution — mark PR as draft, add conflicts to body
+            git merge --abort
+            # Do a merge without commit to freeze the state
+            git merge --no-commit --allow-unrelated-histories "$UPSTREAM_TAG" || true
+            git add -A
+            git commit -m "MERGE CONFLICT: manual resolution needed for $UPSTREAM_TAG" --allow-empty
+          fi
+
+          git push origin "$BRANCH"
+
+      - name: Create Pull Request
+        if: steps.detect.outputs.new_version == 'true' && steps.check_pr.outputs.pr_exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          UPSTREAM_TAG="${{ steps.detect.outputs.upstream_tag }}"
+          OUR_TAG="${{ steps.detect.outputs.our_tag }}"
+          BRANCH="${{ steps.check_pr.outputs.branch }}"
+          STATUS="${{ steps.merge.outputs.merge_status }}"
+          CONFLICTS="${{ steps.merge.outputs.conflicts }}"
+
+          if [ "$STATUS" = "clean" ]; then
+            BODY="✅ Merge automatique upstream $UPSTREAM_TAG (précédent: $OUR_TAG).
+
+          Aucun conflit détecté sur les 7 fichiers NGH.
+
+          **Prochaines étapes après merge :**
+          1. Merge cette PR
+          2. \`git checkout main && git pull\`
+          3. \`git tag ${UPSTREAM_TAG}-ngh1 && git push origin ${UPSTREAM_TAG}-ngh1\`
+          4. GHA build automatique → nouvelle image ghcr.io
+          5. Deploy UGREEN"
+          else
+            BODY="⚠️ **CONFLITS DE MERGE** upstream $UPSTREAM_TAG
+
+          Fichiers en conflit : \`$CONFLICTS\`
+
+          **Résolution manuelle requise :**
+          \`\`\`bash
+          cd pingvin-share-ngh
+          git fetch origin
+          git checkout $BRANCH
+          # Résoudre les conflits sur les fichiers ci-dessus
+          git add -A && git commit --amend --no-edit
+          git push -f origin $BRANCH
+          \`\`\`
+          Puis merge cette PR + tag + build (voir NGH-README.md)."
+          fi
+
+          PR_URL=$(gh pr create \
+            --title "Sync upstream $UPSTREAM_TAG" \
+            --body "$BODY" \
+            --head "$BRANCH" \
+            --base main)
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "$PR_URL"
+
+      - name: Telegram notification
+        if: steps.detect.outputs.new_version == 'true'
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          UPSTREAM_TAG="${{ steps.detect.outputs.upstream_tag }}"
+          STATUS="${{ steps.merge.outputs.merge_status }}"
+
+          if [ "${{ steps.check_pr.outputs.pr_exists }}" = "true" ]; then
+            MSG="ℹ️ NGH Pingvin Fork — PR déjà ouverte pour upstream $UPSTREAM_TAG"
+          elif [ "$STATUS" = "clean" ]; then
+            MSG="✅ NGH Pingvin Fork — upstream $UPSTREAM_TAG detected
+
+          PR créée avec merge propre (0 conflit).
+          Merge la PR + tag ${UPSTREAM_TAG}-ngh1 pour trigger le build.
+
+          https://github.com/${{ github.repository }}/pulls"
+          else
+            MSG="⚠️ NGH Pingvin Fork — upstream $UPSTREAM_TAG detected
+
+          PR créée avec CONFLITS sur : ${{ steps.merge.outputs.conflicts }}
+          Résolution manuelle requise.
+
+          https://github.com/${{ github.repository }}/pulls"
+          fi
+
+          curl -sk --data-urlencode "chat_id=$CHAT_ID" \
+            --data-urlencode "text=$MSG" \
+            --data-urlencode "parse_mode=HTML" \
+            "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" | head -c 200
