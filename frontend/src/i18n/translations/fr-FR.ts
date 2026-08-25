@@ -571,7 +571,7 @@ export default {
   "admin.config.oauth.oidc-discovery-uri": "URI de découverte OpenID",
   "admin.config.oauth.oidc-discovery-uri.description": "L’URI de découverte de la connexion à l'application OpenID OAuth",
   "admin.config.oauth.oidc-sign-out": "Déconnexion du fournisseur OpenID Connect",
-  "admin.config.oauth.oidc-sign-out.description": 'Si activé, le bouton "Déconnexion" vous déconnectera également du fournisseur d'identité OpenID Connect',
+  "admin.config.oauth.oidc-sign-out.description": "Si activé, le bouton \"Déconnexion\" vous déconnectera également du fournisseur d'identité OpenID Connect",
   "admin.config.oauth.oidc-scope": "Paramètres de connexion OpenID",
   "admin.config.oauth.oidc-scope.description": "Paramètres fournis par votre fournisseur OpenID.",
   "admin.config.oauth.oidc-username-claim": "Revendication du nom d’utilisateur OpenID",
