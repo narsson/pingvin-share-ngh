@@ -1,5 +1,5 @@
 import { useMantineColorScheme } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 
 const defaultLogoSrc = "/img/logo.png";
 const darkLogoSrc = "/img/logo-dark.png";
@@ -26,7 +26,7 @@ const Logo = ({ height, width, preserveAspectRatio = true }: LogoProps) => {
     setLogoSrc(preferredLogoSrc);
   }, [preferredLogoSrc]);
 
-  const style: React.CSSProperties = preserveAspectRatio
+  const style: CSSProperties = preserveAspectRatio
     ? {
         maxHeight: height,
         maxWidth: width,
