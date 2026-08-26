@@ -164,21 +164,10 @@ export default function Home() {
               >
                 <FormattedMessage id="home.button.start" />
               </Button>
-              <Button
-                component={Link}
-                href="https://ngh.network"
-                target="_blank"
-                variant="default"
-                radius="xl"
-                size="md"
-                className={classes.control}
-              >
-                <FormattedMessage id="home.button.source" />
-              </Button>
             </Group>
           </div>
           <Group className={classes.image} align="center">
-            <Logo width={200} height={200} />
+            <Logo width={280} height={200} preserveAspectRatio />
           </Group>
         </div>
       </Container>

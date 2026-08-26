@@ -26,10 +26,10 @@ export default {
     "End-to-end confidentiality — no third-party can read your files, ever.",
   "home.bullet.c.name": "No annoying limits",
   "home.bullet.c.description":
-    "Up to 2 GB per upload, no forced downtime.",
+    "Up to 10 GB per upload, no forced downtime.",
 
   "home.button.start": "Get started",
-  "home.button.source": "Source code",
+  "home.button.source": "Learn more",
   // END /
 
   // /auth/signin
@@ -491,7 +491,7 @@ export default {
   // /admin/config
   "admin.config.config-file-warning.title": "Configuration file present",
   "admin.config.config-file-warning.description":
-    "As you have a configured Pingvin Share with a configuration file, you can't change the configuration through the UI.",
+    "As you have configured NGH Share with a configuration file, you can't change the configuration through the UI.",
   "admin.config.title": "Configuration",
   "admin.config.category.general": "General",
   "admin.config.category.appearance": "Appearance",
@@ -535,7 +535,7 @@ export default {
     "Percentage and time remaining",
   "admin.config.general.app-url": "App URL",
   "admin.config.general.app-url.description":
-    "On which URL Pingvin Share is available",
+    "On which URL NGH Share is available",
   "admin.config.security.secure-cookies": "Secure cookies",
   "admin.config.security.secure-cookies.description":
     "Whether to set the secure flag on cookies. If enabled, the site will not function when accessed over HTTP.",
@@ -579,7 +579,7 @@ export default {
     "Maximum number of items inside the cache.",
   "admin.config.cache.redis-enabled": "Redis enabled",
   "admin.config.cache.redis-enabled.description":
-    "Normally Pingvin Share caches information in memory. If you run multiple instances of Pingvin Share, you need to enable Redis caching to share the cache between the instances.",
+    "Normally NGH Share caches information in memory. If you run multiple instances of NGH Share, you need to enable Redis caching to share the cache between the instances.",
   "admin.config.cache.redis-url": "Redis URL",
   "admin.config.cache.redis-url.description":
     "Url to connect to the Redis instance used for caching.",

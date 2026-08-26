@@ -1,5 +1,4 @@
 import {
-  Anchor,
   Button,
   Center,
   Container,
@@ -18,34 +17,27 @@ const Intro = () => {
       <Container size="xs">
         <Stack>
           <Center>
-            <Logo height={80} width={80} />
+            <Logo height={80} width={160} preserveAspectRatio />
           </Center>
           <Center>
-            <Title order={2}>Welcome to Pingvin Share X</Title>
+            <Title order={2}>Bienvenue sur NGH Share</Title>
           </Center>
           <Text>
-            If you enjoy Pingvin Share X please ⭐️ it on{" "}
-            <Anchor
-              target="_blank"
-              href="https://ngh.network"
-            >
-              GitHub
-            </Anchor>{" "}
+            Plateforme professionnelle de partage de fichiers, opérée par
+            NGH Corp Lomé. Alternative sécurisée à WeTransfer, hébergée en
+            interne avec chiffrement bout-en-bout et politique zéro-accès.
           </Text>
           <Text>
-            You can also support development via{" "}
-            <Anchor target="_blank" href="https://github.com/sponsors/smp46">
-              GitHub Sponsors ❤️
-            </Anchor>{" "}
+            Support et contact :{" "}
+            <a href="mailto:support@ngh.network">support@ngh.network</a>
           </Text>
-          <Text>Enough talked, have fun with Pingvin Share X!</Text>
-          <Text mt="lg">How to you want to continue?</Text>
+          <Text mt="lg">Comment souhaitez-vous continuer ?</Text>
           <Stack>
             <Button href="/admin/config/general" component={Link}>
-              Customize configuration
+              Personnaliser la configuration
             </Button>
             <Button href="/" component={Link} variant="light">
-              Explore Pingvin Share X
+              Explorer NGH Share
             </Button>
           </Stack>
         </Stack>

@@ -22,33 +22,22 @@ const Footer = () => {
     "/privacy";
 
   const isMobile = useMediaQuery("(max-width: 700px)");
+  const appName = config.get("general.appName") || "NGH Share";
+  const currentYear = new Date().getFullYear();
+  const brandLine = `© ${currentYear} ${appName} — NGH Corp Lomé`;
 
   return (
     <MFooter height="auto" py={6} px="xl" zIndex={100}>
       {!config.get("legal.enabled") && (
         <Text size="xs" color="dimmed" align="center">
-          Powered by{" "}
-          <Anchor
-            size="xs"
-            href="https://ngh.network"
-            target="_blank"
-          >
-            Pingvin Share X
-          </Anchor>
+          {brandLine}
         </Text>
       )}
       {config.get("legal.enabled") && (
         <SimpleGrid cols={isMobile ? 2 : 3} m={0}>
           {!isMobile && <div></div>}
           <Text size="xs" color="dimmed" align={isMobile ? "left" : "center"}>
-            Powered by{" "}
-            <Anchor
-              size="xs"
-              href="https://ngh.network"
-              target="_blank"
-            >
-              Pingvin Share X
-            </Anchor>
+            {brandLine}
           </Text>
           <div>
             <Text size="xs" color="dimmed" align="right">

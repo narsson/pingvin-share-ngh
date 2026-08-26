@@ -9,12 +9,11 @@ import {
   Title,
 } from "@mantine/core";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { TbLink, TbRefresh, TbSettings, TbUsers } from "react-icons/tb";
+import { useState } from "react";
+import { TbLink, TbSettings, TbUsers } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 import Meta from "../../components/Meta";
 import useTranslate from "../../hooks/useTranslate.hook";
-import configService from "../../services/config.service";
 
 const useStyles = createStyles((theme) => ({
   item: {
@@ -35,7 +34,10 @@ const Admin = () => {
   const { classes, theme } = useStyles();
   const t = useTranslate();
 
-  const [managementOptions, setManagementOptions] = useState([
+  // NGH fork: upstream update check disabled entirely.
+  // Updates are managed via GHA pipeline + UGREEN auto-deploy cron.
+  // See memory: pingvin_automation_pipeline.md
+  const [managementOptions] = useState([
     {
       title: t("admin.button.users"),
       icon: TbUsers,
@@ -52,24 +54,6 @@ const Admin = () => {
       route: "/admin/config/general",
     },
   ]);
-
-  useEffect(() => {
-    configService
-      .isNewReleaseAvailable()
-      .then((isNewReleaseAvailable) => {
-        if (isNewReleaseAvailable) {
-          setManagementOptions([
-            ...managementOptions,
-            {
-              title: "Update",
-              icon: TbRefresh,
-              route: "https://ngh.network/no-update-check",
-            },
-          ]);
-        }
-      })
-      .catch();
-  }, []);
 
   return (
     <>
