@@ -24,7 +24,7 @@ const Footer = () => {
   const isMobile = useMediaQuery("(max-width: 700px)");
   const appName = config.get("general.appName") || "NGH Share";
   const currentYear = new Date().getFullYear();
-  const brandLine = `© ${currentYear} ${appName} — NGH Corp Lomé`;
+  const brandLine = `© ${currentYear} ${appName} — NGH Corp`;
 
   return (
     <MFooter height="auto" py={6} px="xl" zIndex={100}>

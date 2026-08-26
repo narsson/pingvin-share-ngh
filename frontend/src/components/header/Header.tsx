@@ -24,7 +24,7 @@ import Logo from "../Logo";
 import ActionAvatar from "./ActionAvatar";
 import NavbarShareMenu from "./NavbarShareMenu";
 
-const HEADER_HEIGHT = 60;
+const HEADER_HEIGHT = 70;
 
 type NavLink = {
   link?: string;
@@ -342,7 +342,7 @@ const Header = () => {
         <Container className={classes.header}>
           <Link href="/" passHref>
             <Group>
-              <Logo height={35} width={35} />
+              <Logo height={50} width={80} />
               <Text weight={600}>{config.get("general.appName")}</Text>
             </Group>
           </Link>

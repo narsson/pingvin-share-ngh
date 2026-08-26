@@ -13,7 +13,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { TbCheck } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
-import Logo from "../components/Logo";
 import Meta from "../components/Meta";
 import useUser from "../hooks/user.hook";
 import useConfig from "../hooks/config.hook";
@@ -167,7 +166,19 @@ export default function Home() {
             </Group>
           </div>
           <Group className={classes.image} align="center">
-            <Logo width={280} height={200} preserveAspectRatio />
+            <img
+              src="/img/hero-file-sharing.jpg"
+              alt="Plateforme de partage de fichiers NGH Share"
+              width={480}
+              height={270}
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: 12,
+                boxShadow: "0 12px 32px rgba(0,0,0,0.35)",
+                objectFit: "cover",
+              }}
+            />
           </Group>
         </div>
       </Container>
